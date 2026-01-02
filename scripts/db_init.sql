@@ -1,0 +1,4 @@
+
+CREATE DATABASE go_course;
+CREATE EXTENSION IF NOT EXISTS citext;
+
