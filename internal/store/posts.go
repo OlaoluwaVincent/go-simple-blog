@@ -7,6 +7,10 @@ import (
 	"github.com/lib/pq"
 )
 
+type PostInterface interface {
+	Create(context.Context, *Post) error
+}
+
 type Post struct {
 	ID        int64    `json:"id"`
 	Title     string   `json:"title"`
