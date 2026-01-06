@@ -8,7 +8,7 @@ import (
 )
 
 type PostInterface interface {
-	Create(context.Context, *Post) error
+	Create(context.Context, *Post) (*Post, error)
 }
 
 type Post struct {
@@ -25,11 +25,12 @@ type PostStore struct {
 	db *sql.DB
 }
 
-func (s *PostStore) Create(ctx context.Context, post *Post) error {
-	// Implementation for creating a post in the database
+func (s *PostStore) Create(ctx context.Context, post *Post) (*Post, error) {
 	query := `
 	INSERT INTO posts (content, title, user_id, tags)
-	VALUES (?, ?, ?, ?) RETURNING id, created_at, updated_at;`
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, created_at, updated_at;
+	`
 
 	err := s.db.QueryRowContext(
 		ctx,
@@ -45,8 +46,8 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return post, nil
 }

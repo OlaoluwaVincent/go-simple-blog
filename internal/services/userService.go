@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -139,6 +138,57 @@ func (us *UserService) GetUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (us *UserService) UpdateUser(ctx context.Context, user *store.User) error {
-	return us.store.Users.Update(ctx, user)
+func (us *UserService) GetMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims := r.Context().Value("user").(*utils.Claims)
+
+	user, err := us.store.Users.GetByIDUsernameOrEmail(ctx, &claims.UserID, nil, nil)
+
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	response := map[string]any{
+		"user": map[string]any{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (us *UserService) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	context := r.Context()
+
+	var req utils.UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if req.Password != "" {
+		hashed_password, _ := utils.HashPassword(req.Password)
+		req.Password = hashed_password
+	}
+
+	user := &store.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	userData, err := us.store.Users.Update(context, user)
+	if err != nil {
+		http.Error(w, "Update failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userData)
 }

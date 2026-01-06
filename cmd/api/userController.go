@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/olaoluwavincent/full-course/internal/services"
-	"github.com/olaoluwavincent/full-course/internal/store"
 	"github.com/olaoluwavincent/full-course/internal/utils"
 )
 
@@ -41,22 +40,13 @@ func (uc *UserController) loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) updateHandler(w http.ResponseWriter, r *http.Request) {
-	context := r.Context()
-	user := &store.User{
-		Username: r.FormValue("username"),
-		Email:    r.FormValue("email"),
-		Password: r.FormValue("password"),
-	}
-
-	err := uc.userService.UpdateUser(context, user)
-	if err != nil {
-		http.Error(w, "Update failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+	uc.userService.UpdateUser(w, r)
 }
 
 func (uc *UserController) userDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	uc.userService.GetUser(w, r)
+}
+
+func (uc *UserController) getMeHandler(w http.ResponseWriter, r *http.Request) {
+	uc.userService.GetMe(w, r)
 }

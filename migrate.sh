@@ -2,7 +2,7 @@
 
 # migrate.sh - Helper script for golang-migrate
 #
-# Requires: DATABASE_URL environment variable (loaded from .envrc or shell)
+# Requires: DB_URL environment variable (loaded from .envrc or shell)
 
 # Load environment variables from .envrc if it exists
 if [ -f .envrc ]; then
@@ -16,11 +16,11 @@ fi
 
 # Strictly require DB_URL — fail fast with clear message if missing
 if [ -z "$DB_URL" ]; then
-  echo -e "\033[0;31mError: DATABASE_URL is not set.\033[0m" >&2
-  echo "Please define DATABASE_URL in your .envrc file or export it in your shell." >&2
+  echo -e "\033[0;31mError: DB_URL is not set.\033[0m" >&2
+  echo "Please define DB_URL in your .envrc file or export it in your shell." >&2
   echo "" >&2
   echo "Example for .envrc:" >&2
-  echo 'export DATABASE_URL="postgres://user:password@localhost:5432/dbname?sslmode=disable"' >&2
+  echo 'export DB_URL="postgres://user:password@localhost:5432/dbname?sslmode=disable"' >&2
   exit 1
 fi
 
@@ -52,7 +52,7 @@ case "$1" in
 
   up)
     echo -e "${YELLOW}Running migrations UP...${NC}"
-    migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" up
+    migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" up
     ;;
 
   down)
@@ -66,20 +66,20 @@ case "$1" in
     echo -e "${YELLOW}Rolling back $count migration(s)...${NC}"
 
     if [ "$count" = "all" ]; then
-      current_version=$(migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" version 2>/dev/null | grep -o '^[0-9]*' || echo 0)
+      current_version=$(migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" version 2>/dev/null | grep -o '^[0-9]*' || echo 0)
       if [ -n "$current_version" ] && [ "$current_version" -ge 0 ]; then
-        migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" force "$current_version" 2>/dev/null || true
+        migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" force "$current_version" 2>/dev/null || true
       fi
-      migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" down -all
+      migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" down -all
     else
-      migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" down "$count"
+      migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" down "$count"
     fi
     ;;
 
   version)
     echo -e "${GREEN}Current migration version:${NC}"
-    if migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" version > /dev/null 2>&1; then
-      migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" version
+    if migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" version > /dev/null 2>&1; then
+      migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" version
     else
       echo "No schema_migrations table (database is clean/empty)"
     fi
@@ -98,13 +98,13 @@ case "$1" in
     fi
 
     echo -e "${YELLOW}Forcing migration version to $version...${NC}"
-    migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" force "$version"
+    migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" force "$version"
     echo -e "${GREEN}Done! Database version forced to $version${NC}"
     ;;
 
   fix|reset)
     echo -e "${YELLOW}Fixing dirty database — forcing version 0 (clean state)...${NC}"
-    migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" force 0
+    migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" force 0
     echo -e "${GREEN}Database is now clean at version 0${NC}"
     ;;
 
@@ -113,7 +113,7 @@ case "$1" in
     read -p "Are you sure you want to continue? (type 'yes' to confirm): " confirm
     if [ "$confirm" = "yes" ]; then
       echo -e "${YELLOW}Dropping schema_migrations table...${NC}"
-      migrate -path "$MIGRATIONS_DIR" -database "$DATABASE_URL" drop
+      migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" drop
       echo -e "${GREEN}schema_migrations table dropped.${NC}"
     else
       echo "Operation cancelled."

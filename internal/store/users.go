@@ -8,7 +8,7 @@ import (
 type UserInterface interface {
 	Create(context.Context, *User) (*User, error)
 	GetByIDUsernameOrEmail(ctx context.Context, id *int64, username *string, email *string) (*User, error)
-	Update(context.Context, *User) error
+	Update(context.Context, *User) (*User, error)
 }
 
 type User struct {
@@ -90,7 +90,7 @@ func (s *UserStore) GetByIDUsernameOrEmail(
 	return user, nil
 }
 
-func (s *UserStore) Update(ctx context.Context, user *User) error {
+func (s *UserStore) Update(ctx context.Context, user *User) (*User, error) {
 	query := `
 	UPDATE users
 	SET username = ?, email = ?, password = ?, updated_at = CURRENT_TIMESTAMP
@@ -106,8 +106,8 @@ func (s *UserStore) Update(ctx context.Context, user *User) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }
